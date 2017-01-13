@@ -1,16 +1,19 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
+
 #include <time.h>
 #include <limits.h>
+#ifndef WIN32
 /* According to POSIX.1-2001 */
 #include <sys/select.h>
-
+#include <unistd.h>
 /* According to earlier standards */
 #include <sys/time.h>
 #include <sys/types.h>
-#include <unistd.h>
+#else
+//#include <windows.h>
+#endif
 
 #include "rtsp_type.h"
 #include "rtsp_client.h"
@@ -88,6 +91,7 @@ uint32_t ParseUrl(char *url, RtspClientSession *cses)
 
     return True;
 }
+#define TCP_BUF_SIZE 1500
 
 void* RtspHandleTcpConnect(void* args)
 {
@@ -95,10 +99,10 @@ void* RtspHandleTcpConnect(void* args)
     RtspSession *sess = &csess->sess;
 
     int32_t sockfd = sess->sockfd;
-    int32_t num = 0x00, size = 1500;
+    int32_t num = 0x00, size = TCP_BUF_SIZE;
     int32_t rtpch = sess->transport.tcp.start;
     int32_t rtcpch = sess->transport.tcp.end;
-    char    buf[size], *pos = buf, framebuf[1920*1080];
+    char    buf[TCP_BUF_SIZE], *pos = buf, framebuf[1920*1080];
     uint32_t length, framelen = 0x00;
     RtpOverTcp rot;
 #ifdef SAVE_FILE_DEBUG
@@ -160,6 +164,7 @@ void* RtspHandleTcpConnect(void* args)
     printf("RtspHandleTcpConnect Quit!\n");
     return NULL;
 }
+#define  UDP_BUF_SIZE 4096
 
 void* RtspHandleUdpConnect(void* args)
 {
@@ -170,8 +175,8 @@ void* RtspHandleUdpConnect(void* args)
     int32_t rtcpfd = CreateUdpServer(sess->ip, sess->transport.udp.cport_to);
     UdpConnect(&sess->rtpsess.addrfrom, sess->ip, sess->transport.udp.sport_from, rtpfd);
     UdpConnect(&sess->rtpsess.addrto, sess->ip, sess->transport.udp.sport_to, rtcpfd);
-    int32_t num = 0x00, size = 4096;
-    char    buf[size], framebuf[1920*1080];
+    int32_t num = 0x00, size = UDP_BUF_SIZE;
+    char    buf[UDP_BUF_SIZE], framebuf[1920*1080];
     uint32_t length, framelen = 0x00;
 #ifdef RTSP_DEBUG
     printf("------- server port: %d, %d ---------\n", \
@@ -292,7 +297,7 @@ void* RtspEventLoop(void* args)
 
         if (RTSP_KEEPALIVE == sess->status){
             if (RTP_AVP_UDP == sess->trans){
-                pthread_t rtpid = 0x00;
+                os_thread_t rtpid = 0x00;
                 rtpid = RtspCreateThread(RtspHandleUdpConnect, (void *)sess);
                 if (rtpid <= 0x00){
                     fprintf(stderr, "RtspCreateThread Error!\n");

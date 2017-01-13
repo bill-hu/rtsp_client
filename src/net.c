@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
+
 #include <string.h>
 #include <fcntl.h>
-
+#ifndef WIN32
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
@@ -12,7 +12,9 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-
+#include <unistd.h>
+#endif
+#include "port.h"
 #include "net.h"
 
 int32_t TcpConnect(char *ip, uint32_t port)
@@ -107,17 +109,31 @@ int32_t UdpConnect(struct sockaddr_in *addr, char *ip, uint32_t port, uint32_t s
 
 int32_t SocketNonblock(int32_t sockfd)
 {
+#ifdef WIN32
+	int ul = 1;
+	ioctlsocket(sockfd, FIONBIO, &ul);
+#else
     if (fcntl(sockfd, F_SETFL, fcntl(sockfd, F_GETFD, 0) | O_NONBLOCK) == -1) {
         perror("fcntl");
         return -1;
     }
-
+#endif
    return 0;
 }
 
 int32_t SocketCork(int32_t fd, int32_t state)
 {
+#ifdef WIN32
+	int flag = 1;
+	return setsockopt(fd,            /* socket affected */
+		IPPROTO_TCP,     /* set option at TCP level */
+		TCP_NODELAY,     /* name of option */
+		(char *)&flag,  /* the cast is historical
+						cruft */
+		sizeof(int));    /* length of option value */
+#else
     return setsockopt(fd, IPPROTO_TCP, TCP_CORK, &state, sizeof(state));
+#endif
 }
 
 int32_t TcpSendData(int32_t fd, char *buf, uint32_t size)

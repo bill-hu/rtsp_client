@@ -3,8 +3,13 @@
 
 #include <time.h>
 #include <sys/types.h>
+#ifndef WIN32
 #include <sys/socket.h>
 #include <netinet/in.h>
+#else
+#include <WinSock2.h>
+#endif
+
 #include "rtsp_type.h"
 
 #define FRAME_MAX_SIZE              (1920*1080)

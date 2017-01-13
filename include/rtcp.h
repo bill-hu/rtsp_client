@@ -3,7 +3,9 @@
 
 
 #include <stdint.h>
+#ifndef WIN32
 #include <sys/time.h>
+#endif
 
 #include "rtsp_type.h"
 #include "utils.h"

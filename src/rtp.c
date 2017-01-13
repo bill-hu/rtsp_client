@@ -1,8 +1,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#ifndef WIN32
 #include <sys/time.h>
 #include <arpa/inet.h>
+#endif
+
 
 #include "rtsp.h"
 #include "rtp.h"

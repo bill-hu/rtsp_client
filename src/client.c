@@ -5,13 +5,16 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <getopt.h>
+
 #include <time.h>
 #include <fcntl.h>
+
+#ifndef WIN32
 #include <unistd.h>
 #include <sys/time.h>
 #include <pthread.h>
 #include <signal.h>
+#endif
 
 #include "rtsp_type.h"
 #include "rtsp_client.h"
@@ -34,7 +37,7 @@ static void signal_handler(int signo)
     quitflag = 0x01;
     return;
 }
-
+#ifndef WIN32
 static void signal_init()
 {
     signal(SIGINT, signal_handler);
@@ -42,10 +45,10 @@ static void signal_init()
     signal(SIGQUIT, signal_handler);
     return;
 }
-
+#endif
 int32_t main(int argc, char **argv)
 {
-    signal_init();
+   /* signal_init();
 
     int32_t opt;
     char *url = NULL;
@@ -70,7 +73,8 @@ int32_t main(int argc, char **argv)
             default:
                 break;
         }
-    }
+    }*/
+	char * url = argv[1];
 
     RtspClientSession *cses = InitRtspClientSession();
     if ((NULL == cses) || (False == ParseUrl(url, cses))){
@@ -78,7 +82,7 @@ int32_t main(int argc, char **argv)
         return 0x00;
     }
 
-    pthread_t rtspid = RtspCreateThread(RtspEventLoop, (void *)cses);
+    os_thread_t rtspid = RtspCreateThread(RtspEventLoop, (void *)cses);
     if (rtspid < 0x00){
         fprintf(stderr, "RtspCreateThread Error!\n");
         return 0x00;
@@ -91,7 +95,11 @@ int32_t main(int argc, char **argv)
             TrykillThread(rtspid);
             break;
         }
+#ifdef WIN32
+		Sleep(1000);
+#else
         sleep(1);
+#endif
     }while(1);
 
     printf("RTSP Event Loop stopped, waiting 5 seconds...\n");

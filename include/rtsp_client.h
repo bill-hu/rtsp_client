@@ -5,6 +5,7 @@
 #include "rtsp.h"
 
 typedef struct RTSP_VIDEO_INFO{
+	int videoid;
 }VideoInfo;
 
 #if 0

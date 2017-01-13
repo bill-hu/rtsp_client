@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <string.h>
+#ifndef WIN32
 #include <arpa/inet.h>
+#endif
 
 #include "rtcp.h"
 #include "utils.h"
