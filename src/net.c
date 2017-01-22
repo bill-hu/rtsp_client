@@ -140,6 +140,9 @@ int32_t TcpSendData(int32_t fd, char *buf, uint32_t size)
 {
     int32_t num = 0x00;
     num = send(fd, buf, size, 0);
+#ifdef _DEBUG
+	printf("\n-->:%s", buf);
+#endif
 
     return num;
 }
@@ -148,6 +151,11 @@ int32_t TcpSendData(int32_t fd, char *buf, uint32_t size)
 int32_t TcpReceiveData(int32_t fd, char *buf, uint32_t size)
 {
     int32_t num = recv(fd, buf, size, 0);
+	if (num > 0) {
+#ifdef _DEBUG
+		printf("\n<---:%s", buf);
+#endif
+	}
     return num;
 }
 

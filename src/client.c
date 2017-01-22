@@ -76,6 +76,17 @@ int32_t main(int argc, char **argv)
     }*/
 	char * url = argv[1];
 
+#ifdef WIN32
+	WSADATA wsaData;
+	WORD wVersionRequested = MAKEWORD(1, 0);
+
+	if (WSAStartup(wVersionRequested, &wsaData) != 0)
+	{
+		return FALSE;
+	}
+#endif
+
+
     RtspClientSession *cses = InitRtspClientSession();
     if ((NULL == cses) || (False == ParseUrl(url, cses))){
         fprintf(stderr, "Error : Invalid Url Address.\n");

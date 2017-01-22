@@ -38,9 +38,11 @@ static uint32_t GetContentLength(char *buf, uint32_t size)
         ptr++;
     }while(1);
 
-    char tmp[8] = {0x00};
-    strncpy(tmp, p, ptr-p);
-    return  atol(tmp);
+	char c = *ptr;
+	*ptr = 0;
+	uint32_t len = atol(p);
+	*ptr = c;
+	return len;
 }
 
 int32_t RtspReceiveResponse(uint32_t sockfd, BufferControl *bctrl)

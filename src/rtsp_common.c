@@ -16,13 +16,13 @@ static CmdTbl gcmdtbl[]={{"OPTIONS", 0},
                         {"GET_PARAMETER", 32},
                         {"SET_PARAMETER", 64},
                         {"REDIRECT", 128},
-                        {"TEARDOWN", 256},
-                        {"", -1}};
+                        {"TEARDOWN", 256}};
 
 static uint32_t GetCmdTblKey(char *cmd)
 {
     int32_t size = sizeof(gcmdtbl)/sizeof(CmdTbl);
     uint32_t i = 0x00;
+	while (*cmd == 0x20)cmd++;//bypass the blank
 
     for (; i < size; i++){
         if (strncmp(gcmdtbl[i].cmd, cmd, strlen(gcmdtbl[i].cmd)) == 0){

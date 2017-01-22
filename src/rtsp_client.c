@@ -44,7 +44,7 @@ static uint32_t parse_url_ip(char *url, char *ip)
     ip[len] = '\0';
     return True;
 }
-
+#define RTSP_PORT_MAX 100000
 static uint32_t parse_url_port(char *url, uint32_t *port)
 {
     uint32_t offset = sizeof(PROTOCOL_PREFIX) - 1;
@@ -62,10 +62,10 @@ static uint32_t parse_url_port(char *url, uint32_t *port)
             fprintf(stderr, "Error: Invalid port\n");
             return False;
         }
-        pos = url+len; //指向:符号
+        pos = url+len;
         strncpy((char *)buf, (const char *)pos, size);
-        *port = atol((const char *)buf); //Note测试port的范围大小
-        if (*port > USHRT_MAX-1)
+        *port = atol((const char *)buf);
+        if (*port > RTSP_PORT_MAX)
             return False;
     }
 
