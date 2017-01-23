@@ -65,7 +65,9 @@ int32_t RtspOptionsCommand(RtspSession *sess)
 
 
     ParseOptionsPublic(buf, num, sess);
-    sess->status = RTSP_DESCRIBE;
+
+	sess->state = RTSP_DESCRIBE;
+
     return True;
 }
 
@@ -119,7 +121,7 @@ int32_t RtspDescribeCommand(RtspSession *sess)
     if (False == RtspCheckResponseStatus(buf))
         return False;
     ParseSdpProto(buf, num, sess);
-    sess->status = RTSP_SETUP;
+    sess->state = RTSP_SETUP;
 
     return True;
 }
@@ -199,7 +201,7 @@ int32_t RtspSetupCommand(RtspSession *sess)
     }
     ParseSessionID(buf, num, sess);
     sess->packetization = 1;
-    sess->status = RTSP_PLAY;
+    sess->state = RTSP_PLAY;
     return True;
 }
 
@@ -255,7 +257,7 @@ int32_t RtspPlayCommand(RtspSession *sess)
         return False;
     ParseTimeout(buf, num, sess);
     gettimeofday(&sess->last_cmd_time, NULL);
-    sess->status = RTSP_KEEPALIVE;
+    sess->state = RTSP_KEEPALIVE;
     RtspSendKeepAliveCommand(sess);
     return True;
 }
@@ -266,6 +268,7 @@ static int32_t RtspSendKeepAliveCommand(RtspSession *sess)
         RtspGetParameterCommand(sess);
     }else{
         RtspOptionsCommand(sess);
+		sess->state = RTSP_KEEPALIVE;//reset the status
     }
 
     return True;
@@ -389,7 +392,7 @@ int32_t RtspTeardownCommand(RtspSession *sess)
 #endif
     if (False == RtspCheckResponseStatus(buf))
         return False;
-    sess->status = RTSP_QUIT;
+    sess->state = RTSP_QUIT;
     return True;
 }
 
@@ -407,7 +410,7 @@ int32_t RtspStatusMachine(RtspSession *sess)
     int32_t idx  = 0x00;
 
     for (idx = 0x00; idx < size; idx++){
-        if (sess->status == rtspcmdhdl[idx].cmd){
+        if (sess->state == rtspcmdhdl[idx].cmd){
             if (False == rtspcmdhdl[idx].handle(sess)){
                 fprintf(stderr, "Error: Command wasn't supported.\n");
                 return False;

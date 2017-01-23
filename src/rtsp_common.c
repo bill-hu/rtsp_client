@@ -53,23 +53,20 @@ void ParseOptionsPublic(char *buf, uint32_t size, RtspSession *sess)
         return;
     }
     p += strlen(OPTIONS_PUBLIC);
+
     char *ptr = p;
-    char tmp[32] = {0x00};
+
     do{
-        memset(tmp, 0x00, sizeof(tmp));
         if (*ptr == ','){
-            strncpy(tmp, p, ptr-p);
-            tmp[ptr-p]='\0';
-            p = ptr+1;
-            sess->cmdstats += GetCmdTblKey(tmp);
+			sess->cmdstats += GetCmdTblKey(p);
+			p = ptr+1;
         }else if (*ptr == '\r'){
-            strncpy(tmp, p, ptr-p);
-            tmp[ptr-p]='\0';
+			sess->cmdstats += GetCmdTblKey(p);
             break;
         }
         ptr++;
     }while(1);
-    sess->cmdstats += GetCmdTblKey(tmp);
+
 #ifdef RTSP_DEBUG
     printf("cmd stats : %d\n", sess->cmdstats);
 #endif

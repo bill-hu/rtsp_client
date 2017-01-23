@@ -60,7 +60,7 @@ typedef struct RTSPSESSION{
     int32_t  cseq;
     uint32_t timeout;
     int32_t  cmdstats;
-    uint32_t status;
+    uint32_t state;
 
     uint32_t packetization; /* Packetization mode from SDP data */
     union{

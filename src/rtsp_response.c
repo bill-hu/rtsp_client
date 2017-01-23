@@ -23,11 +23,8 @@ static uint32_t GetContentLength(char *buf, uint32_t size)
 {
     char *p = strstr(buf, CONTENT_LENGTH);
     if (NULL == p) {
-        p = strstr(buf, CONTENT_length);
-        if (NULL == p){
-            fprintf(stderr, "Error:Connect-length not found\n");
-            return 0x00;
-        }
+        fprintf(stderr, "Error:Content-length not found\n");
+       return 0x00;
     }
 
     p += strlen(CONTENT_LENGTH);
