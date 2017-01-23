@@ -80,6 +80,7 @@ typedef struct RTSPSESSION{
     char  ip[16];
     char  trans;      /* RTP/AVP/UDP or RTP/AVP/TCP */
     char  reserve[2];
+	os_thread_t rtpid;
 }RtspSession;
 
 typedef struct RTSP_COMMOND_HANDLE{

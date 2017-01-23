@@ -297,12 +297,16 @@ void* RtspEventLoop(void* args)
 
         if (RTSP_KEEPALIVE == sess->status){
             if (RTP_AVP_UDP == sess->trans){
-                os_thread_t rtpid = 0x00;
-                rtpid = RtspCreateThread(RtspHandleUdpConnect, (void *)sess);
-                if (rtpid <= 0x00){
-                    fprintf(stderr, "RtspCreateThread Error!\n");
-                    break;
-                }
+				if (!sess->rtpid) {
+					sess->rtpid = RtspCreateThread(RtspHandleUdpConnect, (void *)sess);
+					if (sess->rtpid <= 0x00) {
+						fprintf(stderr, "RtspCreateThread Error!\n");
+						break;
+					}
+				}
+				else {
+					Sleep(5000);
+				}
             }else if (RTP_AVP_TCP == sess->trans){
                 RtspHandleTcpConnect((void *)sess);
             }
