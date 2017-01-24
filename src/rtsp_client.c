@@ -305,7 +305,18 @@ void* RtspEventLoop(void* args)
 					}
 				}
 				else {
-					Sleep(5000);
+					struct timeval timeout;
+					timeout.tv_sec = 5;
+					timeout.tv_usec = 0;
+					fd_set readfd;
+
+					FD_ZERO(&readfd);
+
+					FD_SET(fd, &readfd);
+
+					int32_t ret = select(fd + 1, &readfd, NULL, NULL, &timeout);
+					if (ret < 0)
+						break;
 				}
             }else if (RTP_AVP_TCP == sess->trans){
                 RtspHandleTcpConnect((void *)sess);
