@@ -33,7 +33,7 @@ typedef struct SDP_RTPMAP{
     int32_t payload;
     char encodename[16];
     int32_t clockrate;
-    int32_t param; /* 视屏流没有编码参数 */
+    int32_t param; /* 视频流没有编码参数 */
 }SdpRtpMap;
 
 typedef struct SDP_ATTRIBUTES{
@@ -54,15 +54,21 @@ typedef struct RTSP_CLIENT_SESSION{
     RtspSession sess;
     RtspSdp     sdp;
     int32_t     quit;
+	os_thread_t rtspid;
 }RtspClientSession;
 
 
 uint32_t ParseUrl(char *url, RtspClientSession *cses);
 void* RtspEventLoop(void* args);
 RtspClientSession* InitRtspClientSession();
-void DeleteRtspClientSession(RtspClientSession *csess);
+
 int32_t ParseRtspUrl(char *url, RtspSession *sess);
 int32_t isRtspClientSessionQuit(RtspClientSession *rcsess);
 void SetRtspClientSessionQuit(RtspClientSession *rcsess);
+
+int rtsp_client_init();
+RtspClientSession * startRtspClient(char * url);
+void closeRtspClient(RtspClientSession *csess);
+
 
 #endif

@@ -23,6 +23,46 @@
 #include "rtp.h"
 #include "rtcp.h"
 
+int rtsp_client_init()
+{
+	int ret = 0;
+#ifdef WIN32
+	/* Initializing windows socket library */
+	{
+		WORD wVersionRequested;
+		WSADATA wsaData;
+
+
+		wVersionRequested = MAKEWORD(1, 1);
+		ret = WSAStartup(wVersionRequested, &wsaData);
+		if (ret)
+		{
+			
+		}
+	}
+#endif
+	return ret;
+}
+
+
+RtspClientSession * startRtspClient(char * url)
+{
+	RtspClientSession *cses = InitRtspClientSession();
+	if ((NULL == cses) || (False == ParseUrl(url, cses))) {
+		fprintf(stderr, "Error : Invalid Url Address.\n");
+		return NULL;
+	}
+
+	cses->rtspid = RtspCreateThread(RtspEventLoop, (void *)cses);
+	if (cses->rtspid < 0x00) {
+		fprintf(stderr, "RtspCreateThread Error!\n");
+		free(cses);
+		return NULL;
+	}
+
+	return cses;
+}
+
 static uint32_t check_url_prefix(char *url)
 {
     if (!strncmp(url, PROTOCOL_PREFIX, strlen(PROTOCOL_PREFIX)))
@@ -356,10 +396,14 @@ RtspClientSession* InitRtspClientSession()
     return cses;
 }
 
-void DeleteRtspClientSession(RtspClientSession *cses)
+void closeRtspClient(RtspClientSession *cses)
 {
     if (NULL == cses)
         return;
+
+	if (cses->rtspid) {
+		TrykillThread(cses->rtspid);
+	}
 
     RtspSession *sess = &cses->sess;
     CloseScokfd(sess->sockfd);

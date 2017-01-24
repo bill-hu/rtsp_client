@@ -76,34 +76,19 @@ int32_t main(int argc, char **argv)
     }*/
 	char * url = argv[1];
 
-#ifdef WIN32
-	WSADATA wsaData;
-	WORD wVersionRequested = MAKEWORD(1, 0);
+	rtsp_client_init();
 
-	if (WSAStartup(wVersionRequested, &wsaData) != 0)
-	{
-		return FALSE;
+
+	RtspClientSession *cses = startRtspClient(url);
+
+	if (!cses) {
+		printf("Start RTSP client error...\n");
+		return -1;
 	}
-#endif
-
-
-    RtspClientSession *cses = InitRtspClientSession();
-    if ((NULL == cses) || (False == ParseUrl(url, cses))){
-        fprintf(stderr, "Error : Invalid Url Address.\n");
-        return 0x00;
-    }
-
-    os_thread_t rtspid = RtspCreateThread(RtspEventLoop, (void *)cses);
-    if (rtspid < 0x00){
-        fprintf(stderr, "RtspCreateThread Error!\n");
-        return 0x00;
-    }
-
 
     do{
         if (0x01 == quitflag){
             SetRtspClientSessionQuit(cses);
-            TrykillThread(rtspid);
             break;
         }
 #ifdef WIN32
@@ -113,8 +98,9 @@ int32_t main(int argc, char **argv)
 #endif
     }while(1);
 
-    printf("RTSP Event Loop stopped, waiting 5 seconds...\n");
-    DeleteRtspClientSession(cses);
+	closeRtspClient(cses);
+
+    printf("RTSP Event Loop stopped...\n");
     return 0x00;
 }
 
