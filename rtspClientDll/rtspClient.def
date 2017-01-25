@@ -1,0 +1,8 @@
+LIBRARY "rtspClient"
+
+
+EXPORTS
+
+	rtsp_client_init
+	startRtspClient
+	closeRtspClient

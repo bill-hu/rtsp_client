@@ -45,13 +45,16 @@ int rtsp_client_init()
 }
 
 
-RtspClientSession * startRtspClient(char * url)
+RtspClientSession * startRtspClient(char * url, RtspClientErrorCb ec, RtspPlayStartCb pc)
 {
 	RtspClientSession *cses = InitRtspClientSession();
 	if ((NULL == cses) || (False == ParseUrl(url, cses))) {
 		fprintf(stderr, "Error : Invalid Url Address.\n");
 		return NULL;
 	}
+
+	cses->sess.ec = ec;
+	cses->sess.pc = pc;
 
 	cses->rtspid = RtspCreateThread(RtspEventLoop, (void *)cses);
 	if (cses->rtspid < 0x00) {
@@ -205,6 +208,8 @@ void* RtspHandleTcpConnect(void* args)
     return NULL;
 }
 #define  UDP_BUF_SIZE 4096
+#define PRTSPSS_RTPSESSION &((RtpSession *)sess->rtpsess)
+#define RTSPSS_RTPSESSION ((RtpSession *)sess->rtpsess)
 
 void* RtspHandleUdpConnect(void* args)
 {
@@ -213,8 +218,8 @@ void* RtspHandleUdpConnect(void* args)
 
     int32_t rtpfd = CreateUdpServer(sess->ip, sess->transport.udp.cport_from);
     int32_t rtcpfd = CreateUdpServer(sess->ip, sess->transport.udp.cport_to);
-    UdpConnect(&sess->rtpsess.addrfrom, sess->ip, sess->transport.udp.sport_from, rtpfd);
-    UdpConnect(&sess->rtpsess.addrto, sess->ip, sess->transport.udp.sport_to, rtcpfd);
+    UdpConnect(PRTSPSS_RTPSESSION->addrfrom, sess->ip, sess->transport.udp.sport_from, rtpfd);
+    UdpConnect(PRTSPSS_RTPSESSION->addrto, sess->ip, sess->transport.udp.sport_to, rtcpfd);
     int32_t num = 0x00, size = UDP_BUF_SIZE;
     char    buf[UDP_BUF_SIZE], framebuf[1920*1080];
     uint32_t length, framelen = 0x00;
@@ -232,7 +237,7 @@ void* RtspHandleUdpConnect(void* args)
     }
 #endif
 
-    gettimeofday(&sess->rtpsess.rtcptv, NULL);
+    gettimeofday(PRTSPSS_RTPSESSION->rtcptv, NULL);
     struct timeval timeout;
     timeout.tv_sec=1;
     timeout.tv_usec=0;
@@ -255,13 +260,13 @@ void* RtspHandleUdpConnect(void* args)
             /*char tmp[] = {0xce, 0xfa, 0xed, 0xfe};*/
             char tmp[] = {0xce, 0xfa};
             if (times < 2){
-                UdpSendData(rtpfd, tmp, sizeof(tmp), &sess->rtpsess.addrfrom);
+                UdpSendData(rtpfd, tmp, sizeof(tmp), PRTSPSS_RTPSESSION->addrfrom);
                 times++;
             }
 
         }
         if (FD_ISSET(rtpfd, &readfd)){
-            num = UdpReceiveData(rtpfd, buf, size, &sess->rtpsess.addrfrom);
+            num = UdpReceiveData(rtpfd, buf, size, PRTSPSS_RTPSESSION->addrfrom);
             if (num < 0x00){
                 fprintf(stderr, "recv error or connection closed!\n");
                 break;
@@ -280,28 +285,28 @@ void* RtspHandleUdpConnect(void* args)
             }
         }
         if (FD_ISSET(rtcpfd, &readfd)){
-            num = UdpReceiveData(rtcpfd, buf, size, &sess->rtpsess.addrto);
+            num = UdpReceiveData(rtcpfd, buf, size, PRTSPSS_RTPSESSION->addrto);
             if (num < 0x00){
                 fprintf(stderr, "recv error or connection closed!\n");
                 break;
             }
-            uint32_t ret = ParseRtcp(buf, num, &sess->rtpsess.stats);
+            uint32_t ret = ParseRtcp(buf, num, PRTSPSS_RTPSESSION->stats);
             if (RTCP_BYE == ret){
                 printf("Receive RTCP BYE!\n");
                 break;
             }else if (RTCP_SR == ret){
                 printf("Receive RTCP Sender Report!\n");
-                gettimeofday(&sess->rtpsess.rtcptv, NULL);
+                gettimeofday(PRTSPSS_RTPSESSION->rtcptv, NULL);
             }
         }
         if (FD_ISSET(rtcpfd, &writefd)){
             struct timeval now;
             gettimeofday(&now, NULL);
-            if (0x02 < now.tv_sec - sess->rtpsess.rtcptv.tv_sec){
-                sess->rtpsess.rtcptv = now;
+            if (0x02 < now.tv_sec - RTSPSS_RTPSESSION->rtcptv.tv_sec){
+				RTSPSS_RTPSESSION->rtcptv = now;
                 char tmp[512];
-                uint32_t len = RtcpReceiveReport(tmp, sizeof(tmp), &sess->rtpsess);
-                UdpSendData(rtcpfd, tmp, len, &sess->rtpsess.addrto);
+				uint32_t len = RtcpReceiveReport(tmp, sizeof(tmp), PRTSPSS_RTPSESSION);
+                UdpSendData(rtcpfd, tmp, len, PRTSPSS_RTPSESSION->addrto);
             }
         }
     }while(1);

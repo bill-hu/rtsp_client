@@ -1,6 +1,9 @@
 #ifndef _RTSP_Client_H_
 #define _RTSP_Client_H_
-
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 #include "rtsp_type.h"
 #include "rtsp.h"
 
@@ -67,8 +70,11 @@ int32_t isRtspClientSessionQuit(RtspClientSession *rcsess);
 void SetRtspClientSessionQuit(RtspClientSession *rcsess);
 
 int rtsp_client_init();
-RtspClientSession * startRtspClient(char * url);
+RtspClientSession * startRtspClient(char * url, RtspClientErrorCb ec, RtspPlayStartCb pc);
 void closeRtspClient(RtspClientSession *csess);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -84,4 +84,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="rtspClient.def">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
 </Project>

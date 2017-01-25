@@ -12,6 +12,8 @@
 
 #include "rtsp_type.h"
 
+
+
 #define FRAME_MAX_SIZE              (1920*1080)
 #define RTP_TCP_MAGIC               (0x24)
 #define RTP_FREQ                    (90000)
@@ -19,6 +21,9 @@
 #define MAX_RTP_PKT_LENGTH          (1400)
 #define H264_PAYLOAD                (96)
 
+#ifdef IN_LINPHONE_
+#include "ortp/rtp.h"
+#else
 /******************************************************************
 RTP_FIXED_HEADER
 0                   1                   2                   3
@@ -140,7 +145,7 @@ typedef struct Rtp_Session{
     struct sockaddr_in addrto;
     RtpStats stats;
 }RtpSession;
-
+#endif
 
 uint32_t GetRtpHeaderLength(char *buf, uint32_t size);
 int32_t CheckRtpSequence(char *buf, void* args);

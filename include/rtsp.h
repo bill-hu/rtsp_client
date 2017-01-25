@@ -1,9 +1,15 @@
 #ifndef _RTSP_H_
 #define _RTSP_H_
-
+#include <time.h>
+#include <sys/types.h>
+#ifndef WIN32
+#include <sys/socket.h>
+#include <netinet/in.h>
+#else
+#include <WinSock2.h>
+#endif
+#include "port.h"
 #include "rtsp_type.h"
-#include "rtp.h"
-#include "rtcp.h"
 
 typedef enum{
     RTSP_START,
@@ -54,6 +60,10 @@ typedef struct AUDIO_MEDIA{
     char control[128];
 }AudioMedia;
 
+
+typedef void(*RtspClientErrorCb)(void * s);
+typedef void(*RtspPlayStartCb)(void * s);
+
 typedef struct RTSPSESSION{
     uint32_t port;
     int32_t  sockfd;
@@ -68,7 +78,7 @@ typedef struct RTSPSESSION{
         RtpTcp    tcp;
     }transport;
     PublicTbl     *pubtbl;
-    RtpSession    rtpsess;
+    void *     rtpsess;
     AudioMedia    amedia;
     VideoMedia    vmedia;
     BufferControl buffctrl;
@@ -81,6 +91,8 @@ typedef struct RTSPSESSION{
     char  trans;      /* RTP/AVP/UDP or RTP/AVP/TCP */
     char  reserve[2];
 	os_thread_t rtpid;
+	RtspClientErrorCb ec;
+	RtspPlayStartCb pc;
 }RtspSession;
 
 typedef struct RTSP_COMMOND_HANDLE{

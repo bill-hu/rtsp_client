@@ -213,26 +213,6 @@ const char * os_strerror(DWORD value);
 
 #endif
 
-const char *getWinSocketError(int error);
-#define getSocketErrorCode() WSAGetLastError()
-#define getSocketError() getWinSocketError(WSAGetLastError())
-
-#define snprintf _snprintf
-#define strcasecmp _stricmp
-
-#if 0
-struct timeval {
-        long    tv_sec;         /* seconds */
-        long    tv_usec;        /* and microseconds */
-};
-#endif
-
-int gettimeofday (struct timeval *tv, void* tz);
-#ifdef _WORKAROUND_MINGW32_BUGS
-char * WSAAPI gai_strerror(int errnum);
-#endif
-
-
 #endif
 
 typedef unsigned char bool_t;

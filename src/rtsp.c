@@ -5,8 +5,9 @@
 #ifndef WIN32
 #include <unistd.h>
 #endif
-
 #include "rtsp_type.h"
+#include "rtp.h"
+#include "rtcp.h"
 #include "utils.h"
 #include "rtsp.h"
 #include "rtsp_common.h"
