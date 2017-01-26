@@ -22,7 +22,7 @@ typedef enum{
     RTSP_SET_PARAMETER = 64,
     RTSP_REDIRECT = 128,
     RTSP_TEARDOWN = 256,
-    RTSP_KEEPALIVE = 512,
+	RTSP_KEEPALIVE = 512,
     RTSP_QUIT
 }EN_RTSP_STATUS;
 
@@ -93,6 +93,7 @@ typedef struct RTSPSESSION{
 	os_thread_t rtpid;
 	RtspClientErrorCb ec;
 	RtspPlayStartCb pc;
+	void * puser;
 }RtspSession;
 
 typedef struct RTSP_COMMOND_HANDLE{

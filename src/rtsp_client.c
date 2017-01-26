@@ -45,7 +45,7 @@ int rtsp_client_init()
 }
 
 
-RtspClientSession * startRtspClient(char * url, RtspClientErrorCb ec, RtspPlayStartCb pc)
+RtspClientSession * startRtspClient(char * url, RtspClientErrorCb ec, RtspPlayStartCb pc, void * puser)
 {
 	RtspClientSession *cses = InitRtspClientSession();
 	if ((NULL == cses) || (False == ParseUrl(url, cses))) {
@@ -55,6 +55,7 @@ RtspClientSession * startRtspClient(char * url, RtspClientErrorCb ec, RtspPlaySt
 
 	cses->sess.ec = ec;
 	cses->sess.pc = pc;
+	cses->sess.puser = puser;
 
 	cses->rtspid = RtspCreateThread(RtspEventLoop, (void *)cses);
 	if (cses->rtspid < 0x00) {
@@ -339,9 +340,13 @@ void* RtspEventLoop(void* args)
                 (RTSP_QUIT == sess->state)){
             break;
         }
-
+#if 0
         if (RTSP_KEEPALIVE == sess->state){
             if (RTP_AVP_UDP == sess->trans){
+				if (sess->pc) {
+					if(sess->state)
+					sess->pc(sess->puser);
+				}
 				if (!sess->rtpid) {
 					sess->rtpid = RtspCreateThread(RtspHandleUdpConnect, (void *)sess);
 					if (sess->rtpid <= 0x00) {
@@ -367,6 +372,7 @@ void* RtspEventLoop(void* args)
                 RtspHandleTcpConnect((void *)sess);
             }
         }
+#endif
     }while(1);
 
     return NULL;
@@ -398,6 +404,7 @@ RtspClientSession* InitRtspClientSession()
     sess->transport.tcp.start = 0x00;
     sess->transport.tcp.end = 0x01;
     memset((void *)&sess->buffctrl, 0x00 ,sizeof(sess->buffctrl));
+	sess->rtpsess = calloc(1, sizeof(RtpSession));
     return cses;
 }
 
@@ -412,6 +419,7 @@ void closeRtspClient(RtspClientSession *cses)
 
     RtspSession *sess = &cses->sess;
     CloseScokfd(sess->sockfd);
+	free(sess->rtpsess);
     free(sess);
     sess = NULL;
     return;

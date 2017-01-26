@@ -70,7 +70,7 @@ int32_t isRtspClientSessionQuit(RtspClientSession *rcsess);
 void SetRtspClientSessionQuit(RtspClientSession *rcsess);
 
 int rtsp_client_init();
-RtspClientSession * startRtspClient(char * url, RtspClientErrorCb ec, RtspPlayStartCb pc);
+RtspClientSession * startRtspClient(char * url, RtspClientErrorCb ec, RtspPlayStartCb pc,void * puser);
 void closeRtspClient(RtspClientSession *csess);
 
 #ifdef __cplusplus

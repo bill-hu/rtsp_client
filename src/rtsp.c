@@ -227,6 +227,9 @@ static int32_t RtspSendPlayCommand(RtspSession *sess)
     return True;
 }
 
+void* RtspHandleUdpConnect(void* args);
+void* RtspHandleTcpConnect(void* args);
+
 int32_t RtspPlayCommand(RtspSession *sess)
 {
     int32_t num;
@@ -258,8 +261,44 @@ int32_t RtspPlayCommand(RtspSession *sess)
         return False;
     ParseTimeout(buf, num, sess);
     gettimeofday(&sess->last_cmd_time, NULL);
+
+	if (sess->pc) {
+		sess->pc(sess->puser);
+	}
+	else
+	{
+		if (RTP_AVP_UDP == sess->trans) {
+			if (sess->pc) {
+				if (sess->state)
+					sess->pc(sess->puser);
+			}
+			if (!sess->rtpid) {
+				sess->rtpid = RtspCreateThread(RtspHandleUdpConnect, (void *)sess);
+				if (sess->rtpid <= 0x00) {
+					fprintf(stderr, "RtspCreateThread Error!\n");
+					return -1;
+				}
+			}
+			else {
+				struct timeval timeout;
+				timeout.tv_sec = 5;
+				timeout.tv_usec = 0;
+				fd_set readfd;
+
+				FD_ZERO(&readfd);
+
+				FD_SET(sock, &readfd);
+
+				int32_t ret = select(sock + 1, &readfd, NULL, NULL, &timeout);
+				if (ret < 0)
+					return -2;
+			}
+		}
+		else if (RTP_AVP_TCP == sess->trans) {
+			RtspHandleTcpConnect((void *)sess);
+		}
+	}
     sess->state = RTSP_KEEPALIVE;
-    RtspSendKeepAliveCommand(sess);
     return True;
 }
 

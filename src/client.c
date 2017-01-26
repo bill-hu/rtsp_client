@@ -79,7 +79,7 @@ int32_t main(int argc, char **argv)
 	rtsp_client_init();
 
 
-	RtspClientSession *cses = startRtspClient(url,NULL,NULL);
+	RtspClientSession *cses = startRtspClient(url,NULL,NULL,NULL);
 
 	if (!cses) {
 		printf("Start RTSP client error...\n");
