@@ -122,6 +122,10 @@ int32_t RtspDescribeCommand(RtspSession *sess)
     if (False == RtspCheckResponseStatus(buf))
         return False;
     ParseSdpProto(buf, num, sess);
+
+	strncpy(sess->sdp, sess->buffctrl.buffer, num);
+	sess->sdp[num] = 0;
+
     sess->state = RTSP_SETUP;
 
     return True;

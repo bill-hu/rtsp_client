@@ -94,6 +94,7 @@ typedef struct RTSPSESSION{
 	RtspClientErrorCb ec;
 	RtspPlayStartCb pc;
 	void * puser;
+	char  sdp[2048];
 }RtspSession;
 
 typedef struct RTSP_COMMOND_HANDLE{
