@@ -272,7 +272,7 @@ void* RtspHandleUdpConnect(void* args)
                 fprintf(stderr, "recv error or connection closed!\n");
                 break;
             }
-            ParseRtp(buf, num, &sess->rtpsess);
+            ParseRtp(buf, num, sess->rtpsess);
             length = sizeof(RtpHeader);
             num = UnpackRtpNAL(buf+length, num-length, framebuf+framelen, framelen);
             framelen += num;
