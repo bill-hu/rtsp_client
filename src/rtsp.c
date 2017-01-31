@@ -229,59 +229,70 @@ int32_t RtspSetupCommand(RtspSession *sess)
     printf("++++++++++++++++++++  SETUP: command  +++++++++++++++++++++++++\n");
 #endif
 
-
-    if (False == RtspSendSetupCommand(sess))
-        return False;
-
-#ifdef RTSP_DEBUG
-    printf("SETUP Request: %s\n", buf);
-#endif
-    memset(buf, '\0', size);
-    num = RtspReceiveResponse(sock, &sess->buffctrl);
-    if (num <= 0) {
-        fprintf(stderr, "Error: Server did not respond properly, closing...");
-        return False;
-    }
+	if (sess->vmedia.control[0]) {
+		if (False == RtspSendSetupCommand(sess))
+			return False;
 
 #ifdef RTSP_DEBUG
-    printf("SETUP Reply: %s\n", buf);
+		printf("SETUP Request: %s\n", buf);
 #endif
-    if (False == RtspCheckResponseStatus(buf))
-        return False;
+		memset(buf, '\0', size);
+		num = RtspReceiveResponse(sock, &sess->buffctrl);
+		if (num <= 0) {
+			fprintf(stderr, "Error: Server did not respond properly, closing...");
+			return False;
+		}
 
-    if (RTP_AVP_UDP == sess->trans){
-        ParseUdpPort(buf, num, sess);
-    }else{
-        ParseInterleaved(buf, num, sess);
-    }
-    ParseSessionID(buf, num, sess);
-
-	sess->cseq++;
-
-	if (False == RtspSendSetupCommand2(sess))
-		return False;
 #ifdef RTSP_DEBUG
-	printf("SETUP Request: %s\n", buf);
+		printf("SETUP Reply: %s\n", buf);
 #endif
-	memset(buf, '\0', size);
-	num = RtspReceiveResponse(sock, &sess->buffctrl);
-	if (num <= 0) {
-		fprintf(stderr, "Error: Server did not respond properly, closing...");
-		return False;
+		if (False == RtspCheckResponseStatus(buf))
+			return False;
+
+		if (RTP_AVP_UDP == sess->trans) {
+			ParseUdpPort(buf, num, sess);
+		}
+		else {
+			ParseInterleaved(buf, num, sess);
+		}
+		ParseSessionID(buf, num, sess);
 	}
 
-#ifdef RTSP_DEBUG
-	printf("SETUP Reply: %s\n", buf);
-#endif
-	if (False == RtspCheckResponseStatus(buf))
-		return False;
+	if (sess->amedia.control[0]) {
+		if (sess->vmedia.control[0]) {
+			sess->cseq++;
+		}
 
-	if (RTP_AVP_UDP == sess->trans) {
-		ParseUdpPort2(buf, num, sess);
+		if (False == RtspSendSetupCommand2(sess))
+			return False;
+#ifdef RTSP_DEBUG
+		printf("SETUP Request: %s\n", buf);
+#endif
+		memset(buf, '\0', size);
+		num = RtspReceiveResponse(sock, &sess->buffctrl);
+		if (num <= 0) {
+			fprintf(stderr, "Error: Server did not respond properly, closing...");
+			return False;
+		}
+
+#ifdef RTSP_DEBUG
+		printf("SETUP Reply: %s\n", buf);
+#endif
+		if (False == RtspCheckResponseStatus(buf))
+			return False;
+
+		if (RTP_AVP_UDP == sess->trans) {
+			ParseUdpPort2(buf, num, sess);
+		}
+		else {
+			ParseInterleaved(buf, num, sess);
+		}
+
+		if (!sess->sessid[0]){
+		ParseSessionID(buf, num, sess);
+		}
 	}
-	else {
-		ParseInterleaved(buf, num, sess);
-	}
+
 
 
     sess->packetization = 1;
