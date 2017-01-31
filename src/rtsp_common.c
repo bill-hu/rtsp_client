@@ -74,7 +74,7 @@ void ParseOptionsPublic(char *buf, uint32_t size, RtspSession *sess)
 }
 
 
-static void GetClientPort(char *buf, uint32_t size, RtspSession *sess)
+static void GetClientPort(char *buf, uint32_t size, RtpUdp * udp)
 {
     char *p = strstr(buf, SETUP_CPORT);
     if (!p) {
@@ -93,7 +93,7 @@ static void GetClientPort(char *buf, uint32_t size, RtspSession *sess)
 
     char tmp[8] = {0x00};
     strncpy(tmp, p, ptr-p);
-    sess->transport.udp.cport_from = atol(tmp);
+    udp->cport_from = atol(tmp);
     memset(tmp, 0x00, sizeof(tmp));
     ptr++;
 
@@ -105,13 +105,12 @@ static void GetClientPort(char *buf, uint32_t size, RtspSession *sess)
         ptr++;
     }while(1);
     strncpy(tmp, p, ptr-p);
-    sess->transport.udp.cport_to = atol(tmp);
-    memset(tmp, 0x00, sizeof(tmp));
+    udp->cport_to = atol(tmp);
 
     return;
 }
 
-static void GetServerPort(char *buf, uint32_t size, RtspSession *sess)
+static void GetServerPort(char *buf, uint32_t size, RtpUdp * udp)
 {
     char tmp[8] = {0x00};
     memset(tmp, 0x00, sizeof(tmp));
@@ -129,7 +128,7 @@ static void GetServerPort(char *buf, uint32_t size, RtspSession *sess)
         ptr++;
     }while(1);
     strncpy(tmp, p, ptr-p);
-    sess->transport.udp.sport_from = atol(tmp);
+    udp->sport_from = atol(tmp);
     memset(tmp, 0x00, sizeof(tmp));
     ptr++;
 
@@ -141,15 +140,15 @@ static void GetServerPort(char *buf, uint32_t size, RtspSession *sess)
         ptr++;
     }while(1);
     strncpy(tmp, p, ptr-p);
-    sess->transport.udp.sport_to = atol(tmp);
+    udp->sport_to = atol(tmp);
 
     return;
 }
 
 int32_t ParseUdpPort(char *buf, uint32_t size, RtspSession *sess)
 {
-    GetClientPort(buf, size, sess);
-    GetServerPort(buf, size, sess);
+    GetClientPort(buf, size, &sess->transport.udp);
+    GetServerPort(buf, size, &sess->transport.udp);
 
 #ifdef RTSP_DEBUG
     printf("client port from %d to %d\n", \
@@ -160,6 +159,22 @@ int32_t ParseUdpPort(char *buf, uint32_t size, RtspSession *sess)
             sess->transport.udp.sport_to);
 #endif
     return True;
+}
+
+int32_t ParseUdpPort2(char *buf, uint32_t size, RtspSession *sess)
+{
+	GetClientPort(buf, size, &sess->transport2.udp);
+	GetServerPort(buf, size, &sess->transport2.udp);
+
+#ifdef RTSP_DEBUG
+	printf("client port from %d to %d\n", \
+		sess->transport.udp.cport_from, \
+		sess->transport.udp.cport_to);
+	printf("server port from %d to %d\n", \
+		sess->transport.udp.sport_from, \
+		sess->transport.udp.sport_to);
+#endif
+	return True;
 }
 
 int32_t ParseTimeout(char *buf, uint32_t size, RtspSession *sess)
@@ -298,6 +313,43 @@ void GetSdpVideoAcontrol(char *buf, uint32_t size, RtspSession *sess)
     return;
 }
 
+void GetSdpAudioAcontrol(char *buf, uint32_t size, RtspSession *sess)
+{
+	char *ptr = (char *)memmem((const void*)buf, size,
+		(const void*)SDP_M_AUDIO, strlen(SDP_M_AUDIO) - 1);
+	if (NULL == ptr) {
+		fprintf(stderr, "Error: m=video not found!\n");
+		return;
+	}
+
+	ptr = (char *)memmem((const void*)ptr, size,
+		(const void*)SDP_A_CONTROL, strlen(SDP_A_CONTROL) - 1);
+	if (NULL == ptr) {
+		fprintf(stderr, "Error: a=control not found!\n");
+		return;
+	}
+
+	char *endptr = (char *)memmem((const void*)ptr, size,
+		(const void*)"\r\n", strlen("\r\n") - 1);
+	if (NULL == endptr) {
+		fprintf(stderr, "Error: %s not found!\n", "\r\n");
+		return;
+	}
+	ptr += strlen(SDP_A_CONTROL);
+	if ('*' == *ptr) {
+		/* a=control:* */
+		printf("a=control:*\n");
+		return;
+	}
+	else {
+		/* a=control:rtsp://ip:port/track1  or a=control : TrackID=1*/
+		memcpy((void *)sess->amedia.control, (const void*)(ptr), (endptr - ptr));
+		sess->amedia.control[endptr - ptr] = '\0';
+	}
+
+	return;
+}
+
 void GetSdpVideoTransport(char *buf, uint32_t size, RtspSession *sess)
 {
     char *ptr = (char *)memmem((const void*)buf, size,
@@ -321,10 +373,36 @@ void GetSdpVideoTransport(char *buf, uint32_t size, RtspSession *sess)
     return;
 }
 
+void GetSdpAudioTransport(char *buf, uint32_t size, RtspSession *sess)
+{
+	char *ptr = (char *)memmem((const void*)buf, size,
+		(const void*)SDP_M_AUDIO, strlen(SDP_M_AUDIO) - 1);
+	if (NULL == ptr) {
+		fprintf(stderr, "Error: m=audio not found!\n");
+		return;
+	}
+
+	ptr = (char *)memmem((const void*)ptr, size,
+		(const void*)UDP_TRANSPORT, strlen(UDP_TRANSPORT) - 1);
+	if (NULL != ptr) {
+		sess->trans2 = RTP_AVP_UDP;
+	}
+	else {
+		ptr = (char *)memmem((const void*)ptr, size,
+			(const void*)TCP_TRANSPORT, strlen(TCP_TRANSPORT) - 1);
+		if (NULL != ptr)
+			sess->trans2 = RTP_AVP_TCP;
+	}
+
+	return;
+}
+
 int32_t ParseSdpProto(char *buf, uint32_t size, RtspSession *sess)
 {
     GetSdpVideoTransport(buf, size, sess);
     GetSdpVideoAcontrol(buf, size, sess);
+	GetSdpAudioTransport(buf, size, sess);
+	GetSdpAudioAcontrol(buf, size, sess);
 #ifdef RTSP_DEBUG
     printf("video control: %s\n", sess->vmedia.control);
 #endif

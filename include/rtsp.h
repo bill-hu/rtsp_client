@@ -77,6 +77,10 @@ typedef struct RTSPSESSION{
         RtpUdp    udp;
         RtpTcp    tcp;
     }transport;
+	union {
+		RtpUdp    udp;
+		RtpTcp    tcp;
+	}transport2;
     PublicTbl     *pubtbl;
     void *     rtpsess;
     AudioMedia    amedia;
@@ -89,6 +93,7 @@ typedef struct RTSPSESSION{
     char  password[128];
     char  ip[16];
     char  trans;      /* RTP/AVP/UDP or RTP/AVP/TCP */
+	char  trans2;      /* RTP/AVP/UDP or RTP/AVP/TCP */
     char  reserve[2];
 	os_thread_t rtpid;
 	RtspClientErrorCb ec;

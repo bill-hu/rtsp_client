@@ -15,6 +15,7 @@
 #define CMD_DESCRIBE      "DESCRIBE %s RTSP/1.0\r\nCSeq: %i\r\nUser-Agent: s-rtsp\r\nAccept: application/sdp\r\n\r\n"
 #define CMD_TCP_SETUP     "SETUP %s RTSP/1.0\r\nCSeq: %i\r\nUser-Agent: s-rtsp\r\nTransport: RTP/AVP/TCP;unicast;interleaved=0-1\r\n\r\n"
 #define CMD_UDP_SETUP     "SETUP %s RTSP/1.0\r\nCSeq: %i\r\nUser-Agent: s-rtsp\r\nTransport: RTP/AVP;unicast;client_port=%d-%d\r\n\r\n"
+#define CMD_UDP_SETUP_S     "SETUP %s RTSP/1.0\r\nCSeq: %i\r\nUser-Agent: s-rtsp\r\nTransport: RTP/AVP;unicast;client_port=%d-%d\r\nSession: %s\r\n\r\n"
 #define CMD_PLAY          "PLAY %s RTSP/1.0\r\nCSeq: %i\r\nUser-Agent: s-rtsp\r\nSession: %s\r\nRange: npt=0.00-\r\n\r\n"
 #define CMD_GET_PARAMETER "GET_PARAMETER %s RTSP/1.0\r\nCSeq: %i\r\nSession: %s\r\n\r\n"
 #define CMD_TEARDOWN      "TEARDOWN %s RTSP/1.0\r\nCSeq: %i\r\nSession: %s\r\n\r\n"

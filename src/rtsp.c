@@ -168,6 +168,56 @@ static int32_t RtspSendSetupCommand(RtspSession *sess)
     return True;
 }
 
+
+static int32_t RtspSendSetupCommand2(RtspSession *sess)
+{
+	int32_t size = sizeof(sess->buffctrl.buffer);
+	int32_t num = 0x00;
+	int32_t sock = sess->sockfd;
+	char *buf = sess->buffctrl.buffer;
+	char url[256];
+
+	memset(buf, '\0', size);
+	memset(url, '\0', sizeof(url));
+	if (NULL == strstr(sess->amedia.control, PROTOCOL_PREFIX)) {
+		int32_t len = strlen(sess->url);
+		strncpy(url, sess->url, len);
+		if (sess->amedia.control[0]) {
+			url[len] = '/';
+			url[len + 1] = '\0';
+		}
+		else {
+			url[len] = 0;
+		}
+	}
+	strncat(url, sess->amedia.control, strlen(sess->amedia.control));
+#ifdef RTSP_DEBUG
+	printf("SETUP URL: %s\n", url);
+#endif
+	if (RTP_AVP_TCP == sess->trans2) {
+		num = snprintf(buf, size, CMD_TCP_SETUP, url, sess->cseq);
+	}
+	else if (RTP_AVP_UDP == sess->trans2) {
+		if (sess->sessid[0]) {
+			num = snprintf(buf, size, CMD_UDP_SETUP_S, url, sess->cseq, 30002, 30003, sess->sessid);
+		}
+		else {
+			num = snprintf(buf, size, CMD_UDP_SETUP, url, sess->cseq, 30002, 30003);
+		}
+	}
+	if (num < 0x00) {
+		fprintf(stderr, "%s : snprintf error!\n", __func__);
+		return False;
+	}
+	num = TcpSendData(sock, buf, (uint32_t)num);
+	if (num < 0) {
+		fprintf(stderr, "%s : Send Error\n", __func__);
+		return False;
+	}
+	return True;
+}
+
+
 int32_t RtspSetupCommand(RtspSession *sess)
 {
     int32_t num;
@@ -205,6 +255,35 @@ int32_t RtspSetupCommand(RtspSession *sess)
         ParseInterleaved(buf, num, sess);
     }
     ParseSessionID(buf, num, sess);
+
+	sess->cseq++;
+
+	if (False == RtspSendSetupCommand2(sess))
+		return False;
+#ifdef RTSP_DEBUG
+	printf("SETUP Request: %s\n", buf);
+#endif
+	memset(buf, '\0', size);
+	num = RtspReceiveResponse(sock, &sess->buffctrl);
+	if (num <= 0) {
+		fprintf(stderr, "Error: Server did not respond properly, closing...");
+		return False;
+	}
+
+#ifdef RTSP_DEBUG
+	printf("SETUP Reply: %s\n", buf);
+#endif
+	if (False == RtspCheckResponseStatus(buf))
+		return False;
+
+	if (RTP_AVP_UDP == sess->trans) {
+		ParseUdpPort2(buf, num, sess);
+	}
+	else {
+		ParseInterleaved(buf, num, sess);
+	}
+
+
     sess->packetization = 1;
     sess->state = RTSP_PLAY;
     return True;
