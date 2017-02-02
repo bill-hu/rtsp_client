@@ -1,7 +1,3 @@
-# rtsp_client
-
-代码处于暂停状态，没有开发完毕。
-
-功能：
-1.RTSP协议中常用的交互命令功能基本实现。
-2.RTSP OVER UDP已经通过VLC调试。
+#rtsp_client
+base on the code from https://github.com/don6hao/rtsp_client
+my intent is use a relatively simple rtsp code,to work as the rtsp layer,to co-work with linphone mediastream2,to make linphone support both SIP and RTSP.
